@@ -23,6 +23,20 @@ def load_html_to_df(file_path):
             df = pd.DataFrame()
     return df
 
+def split_by_decade(df):
+    df['Date'] = pd.to_datetime(df['Date'])
+    decades = {
+        '1970s': df[(df['Date'] >= '1970-01-02') & (df['Date'] <= '1979-12-31')],
+        '1980s': df[(df['Date'] >= '1980-01-01') & (df['Date'] <= '1989-12-31')],
+        '1990s': df[(df['Date'] >= '1990-01-01') & (df['Date'] <= '1999-12-31')],
+        '2000s': df[(df['Date'] >= '2000-01-01') & (df['Date'] <= '2009-12-31')],
+        '2010s': df[(df['Date'] >= '2010-01-01') & (df['Date'] <= '2017-11-10')]
+    }
+    return decades
+
+def get_summary_stats(df):
+    return df.describe(include='all').to_html()
+
 @app.route('/')
 def show_dataframe():
     file_path = r'C:\Users\avram\OneDrive\Desktop\TRG Week 36\xom.us.txt'
@@ -31,17 +45,31 @@ def show_dataframe():
         df = df.drop(columns=["OpenInt"])
     if df.empty:
         html_table = "<p>No table or tabular data found in the file.</p>"
+        decade_tables = ""
     else:
+        decades = split_by_decade(df)
+        decade_tables = ""
+        for name, ddf in decades.items():
+            decade_tables += f"<h3>{name}</h3>"
+            if ddf.empty:
+                decade_tables += "<p>No data for this decade.</p>"
+            else:
+                decade_tables += ddf.to_html(index=False)
+                decade_tables += "<h4>Summary Statistics</h4>"
+                decade_tables += get_summary_stats(ddf)
         html_table = df.to_html(index=False)
     return render_template_string("""
         <html>
-        <head><title>HTML DataFrame</title></head>
+        <head><title>HTML DataFrame by Decade</title></head>
         <body>
-            <h2>HTML DataFrame</h2>
+            <h2>Full DataFrame</h2>
             {{ table|safe }}
+            <hr>
+            <h2>DataFrame Split by Decade</h2>
+            {{ decade_tables|safe }}
         </body>
         </html>
-    """, table=html_table)
+    """, table=html_table, decade_tables=decade_tables)
 
 if __name__ == '__main__':
     app.run(debug=True)

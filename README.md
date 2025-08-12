@@ -20,6 +20,11 @@
 
 ### 3rd Commit
 
+- Implemented logic to split the cleaned DataFrame by decade (1970s, 1980s, 1990s, 2000s, 2010s).
+
+
+- Added decade-wise summary statistics and displayed each decade’s data and stats on the Flask web interface.
+
 ### 4th Commit
 
 ### 5th Commit
