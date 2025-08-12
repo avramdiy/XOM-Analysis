@@ -52,6 +52,22 @@ def plot_decade(df, column='Close'):
     img_base64 = base64.b64encode(buf.read()).decode('utf-8')
     return f'<img src="data:image/png;base64,{img_base64}"/>'
 
+def plot_moving_average(df, column='Close', window=20):
+    plt.figure(figsize=(8, 3))
+    plt.plot(df['Date'], df[column], label='Close')
+    plt.plot(df['Date'], df[column].rolling(window=window).mean(), label=f'{window}-Day MA')
+    plt.title(f"{column} & {window}-Day Moving Average")
+    plt.xlabel("Date")
+    plt.ylabel(column)
+    plt.legend()
+    plt.tight_layout()
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    return f'<img src="data:image/png;base64,{img_base64}"/>'
+
 @app.route('/')
 def show_dataframe():
     file_path = r'C:\Users\avram\OneDrive\Desktop\TRG Week 36\xom.us.txt'
@@ -76,6 +92,8 @@ def show_dataframe():
                 if 'Close' in ddf.columns:
                     decade_tables += "<h4>Close Price Trend</h4>"
                     decade_tables += plot_decade(ddf, column='Close')
+                    decade_tables += "<h4>20-Day Moving Average</h4>"
+                    decade_tables += plot_moving_average(ddf, column='Close', window=20)
         html_table = df.head(10).to_html(index=False)  # Only show first 10 rows
     return render_template_string("""
         <html>
@@ -89,7 +107,6 @@ def show_dataframe():
         </body>
         </html>
     """, table=html_table, decade_tables=decade_tables)
-
 
 if __name__ == '__main__':
     app.run(debug=True)

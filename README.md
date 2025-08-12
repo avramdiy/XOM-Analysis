@@ -30,3 +30,5 @@
 - Adjusted each split decade dataframe to load the first 5 rows and provide a visualization for each dataframe.
 
 ### 5th Commit
+
+- Added visualizations to compare the 20 Day Moving Average to the Close Price chart per split decade.
