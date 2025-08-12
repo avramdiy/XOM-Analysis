@@ -1,13 +1,15 @@
 import pandas as pd
 from flask import Flask, render_template_string
 from bs4 import BeautifulSoup
+import matplotlib.pyplot as plt
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 
 def load_html_to_df(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         raw_data = f.read()
-    # Try to parse as HTML table first
     soup = BeautifulSoup(raw_data, 'html.parser')
     table = soup.find('table')
     if table:
@@ -16,7 +18,6 @@ def load_html_to_df(file_path):
         except Exception:
             df = pd.DataFrame()
     else:
-        # If no HTML table, try to read as CSV or TSV
         try:
             df = pd.read_csv(file_path, sep=None, engine='python')
         except Exception:
@@ -37,6 +38,20 @@ def split_by_decade(df):
 def get_summary_stats(df):
     return df.describe(include='all').to_html()
 
+def plot_decade(df, column='Close'):
+    plt.figure(figsize=(8, 3))
+    plt.plot(df['Date'], df[column], label=column)
+    plt.title(f"{column} Price Over Time")
+    plt.xlabel("Date")
+    plt.ylabel(column)
+    plt.tight_layout()
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    return f'<img src="data:image/png;base64,{img_base64}"/>'
+
 @app.route('/')
 def show_dataframe():
     file_path = r'C:\Users\avram\OneDrive\Desktop\TRG Week 36\xom.us.txt'
@@ -54,22 +69,27 @@ def show_dataframe():
             if ddf.empty:
                 decade_tables += "<p>No data for this decade.</p>"
             else:
-                decade_tables += ddf.to_html(index=False)
+                decade_tables += ddf.head(5).to_html(index=False)  # Show only first 5 rows
                 decade_tables += "<h4>Summary Statistics</h4>"
                 decade_tables += get_summary_stats(ddf)
-        html_table = df.to_html(index=False)
+                # Visualization for each decade
+                if 'Close' in ddf.columns:
+                    decade_tables += "<h4>Close Price Trend</h4>"
+                    decade_tables += plot_decade(ddf, column='Close')
+        html_table = df.head(10).to_html(index=False)  # Only show first 10 rows
     return render_template_string("""
         <html>
         <head><title>HTML DataFrame by Decade</title></head>
         <body>
-            <h2>Full DataFrame</h2>
+            <h2>Full DataFrame (First 10 Rows)</h2>
             {{ table|safe }}
             <hr>
-            <h2>DataFrame Split by Decade</h2>
+            <h2>DataFrame Split by Decade (First 5 Rows)</h2>
             {{ decade_tables|safe }}
         </body>
         </html>
     """, table=html_table, decade_tables=decade_tables)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
