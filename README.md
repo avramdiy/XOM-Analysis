@@ -12,6 +12,12 @@
 
 ### 2nd Commit
 
+- Past code did not generate an HTML link. Edited parsing logic.
+
+- Dropped OpenInt column.
+
+- Data starts from 1970-01-02 and ends with 2017-11-10.
+
 ### 3rd Commit
 
 ### 4th Commit
